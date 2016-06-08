@@ -1,0 +1,10 @@
+# Site settings
+title: WET, Well Expressed Tests
+tag_text: The WET Manifesto
+description: The WET Manifesto is testing as it ought to be.  
+
+# Build settings
+markdown: kramdown
+exclude: ["README.md"]
+sass:
+  style: compressed
