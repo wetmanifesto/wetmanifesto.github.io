@@ -39,24 +39,8 @@ layout: default
 
   @Test
   public void when_Consumer_Processes_The_Event_Should_Update_Its_Offset_To_Be_Same_As_The_Offset_of_The_Event_It_Processed() {
-    BSONTimestamp eventOffset = new BSONTimestamp(123, 456);
-    EventConsumer<SomethingHappenedEvent> eventConsumer = mock(EventConsumer.class);
-    doReturn(mongoConverter).when(subject.eventStreamMongoTemplate).getConverter();
-    SomethingHappenedEvent event = new SomethingHappenedEvent();
-    doReturn(event).when(mongoConverter).read(SomethingHappenedEvent.class, jsonObject);
-    doReturn(new ObjectId("some-unique-eventId")).when(jsonObject).get("_id");
-    doReturn(eventOffset).when(jsonObject).get("eventOffset");
 
-    ArgumentCaptor<EventConsumerOffset> offsetCaptor = ArgumentCaptor.forClass(EventConsumerOffset.class);
-
-    subject.processEvent(eventConsumer, SomethingHappenedEvent.class, jsonObject, consumerName);
-
-    InOrder inOrder = Mockito.inOrder(eventConsumer, subject.eventConsumerOffsetRepository);
-    inOrder.verify(eventConsumer).onEvent(event);
-    inOrder.verify(subject.eventStreamOffsetRepository).save(offsetCaptor.capture());
-    EventConsumerOffset eventConsumerOffset = offsetCaptor.getValue();
-    assertEquals(eventOffset, eventConsumerOffset.getLastEventOffset());
-}
+  }
 
 
 ~~~
