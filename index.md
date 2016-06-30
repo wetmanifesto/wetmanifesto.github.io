@@ -7,33 +7,6 @@ layout: default
 <iframe src="https://ghbtns.com/github-btn.html?user=wetmanifesto&amp;repo=wetmanifesto.github.io&amp;type=watch&amp;count=true&amp;size=large"
   allowtransparency="true" frameborder="0" scrolling="0" width="170" height="30"></iframe><br/>
 
-## The Horror
-
-~~~java
-@SuppressWarnings("unchecked")
-@Test
-  public void processEventShouldUpdateTheEventConsumerOffsetTable() {
-    BSONTimestamp eventOffset = new BSONTimestamp(123, 456);
-    EventConsumer<SomethingHappenedEvent> eventConsumer = mock(EventConsumer.class);
-    doReturn(mongoConverter).when(subject.eventStreamMongoTemplate).getConverter();
-    doReturn(fakeEvent).when(mongoConverter).read(SomethingHappenedEvent.class, jsonObject);
-    doReturn(new ObjectId(EVENT_ID)).when(jsonObject).get("_id");
-    doReturn(eventOffset).when(jsonObject).get("eventOffset");
-
-    ArgumentCaptor<EventStreamOffset> captor = ArgumentCaptor.forClass(EventConsumerOffset.class);
-
-    subject.processEvent(eventConsumer, SomethingHappenedEvent.class, json, consumerName);
-
-    InOrder inOrder = Mockito.inOrder(eventConsumer, subject.eventConsumerOffsetRepository);
-    inOrder.verify(eventConsumer).onEvent(fakeEvent);
-    inOrder.verify(subject.eventStreamOffsetRepository).save(captor.capture());
-    EventConsumerOffset eventConsumerOffset = captor.getValue();
-    assertEquals(consumerName, eventConsumer.getEventConsumerName());
-    assertEquals(eventOffset, eventConsumerOffset.getLastEventOffset());
-}
-~~~
-
-
 ## The Pillars of the WET Manifesto
 __Readability over duplication__
 *Instead of using private methods in your test to avoid code duplication, each unit test should take care of its own explicit setup, method calls and assertions. Unit tests should be isolated from each other so they can be understood without reading the entire test suite*
@@ -51,6 +24,64 @@ __Single purpose for each test__
 
 __Tests should be well-organized__
 *Follow the "given, when, then" structure when writing your tests, with clear and distinct logical breaks separating each block. Test setups should be kept to a minimal, without any extraneous data setup. Anyone reading the test should understand the purpose of each field you are creating in your setup data. Spacing is crucial for reading tests and help the eyes to logically parse tests.*
+
+### Bad
+
+~~~java
+@Test
+  public void processEventShouldUpdateTheEventConsumerOffsetTable() {
+    BSONTimestamp eventOffset = new BSONTimestamp(123, 456);
+    EventConsumer<SomethingHappenedEvent> eventConsumer = mock(EventConsumer.class);
+    doReturn(mongoConverter).when(subject.eventStreamMongoTemplate).getConverter();
+    doReturn(fakeEvent).when(mongoConverter).read(SomethingHappenedEvent.class, jsonObject);
+    doReturn(new ObjectId(EVENT_ID)).when(jsonObject).get("_id");
+    doReturn(eventOffset).when(jsonObject).get("eventOffset");
+
+    ArgumentCaptor<EventStreamOffset> captor = ArgumentCaptor.forClass(EventConsumerOffset.class);
+
+    subject.processEvent(eventConsumer, SomethingHappenedEvent.class);
+
+    InOrder inOrder = Mockito.inOrder(eventConsumer, subject.eventConsumerOffsetRepository);
+    inOrder.verify(eventConsumer).onEvent(fakeEvent);
+    inOrder.verify(subject.eventStreamOffsetRepository).save(captor.capture());
+    EventConsumerOffset eventConsumerOffset = captor.getValue();
+    assertEquals(consumerName, eventConsumer.getEventConsumerName());
+    assertEquals(eventOffset, eventConsumerOffset.getLastEventOffset());
+}
+~~~
+
+### Good
+
+~~~groovy
+  def BSONTimestamp eventOffset = new BSONTimestamp(123, 456);
+  def subject = new SubjectUnderTest(eventStreamMongoTemplate: Mock(EventStreamMongoTemplate))
+  def eventConsumer = Mock(EventConsumer)
+
+  def setup(){
+    subject.eventStreamMongoTemplate.getConverter() >> mongoConverter
+    mongoConverter.read(SomethingHappenedEvent, jsonObject) >> fakeEvent
+    jsonObject.get("_id") >> new ObjectId(id: EVENT_ID)
+    jsonObject.get("eventOffset") >> eventOffset
+  }
+
+  def 'processEvent() updates the eventConsumer name' {
+    when:
+    subject.processEvent(eventConsumer, SomethingHappenedEvent)
+
+    then:
+    consumerName == eventConsumer.getEventConsumerName()
+  }
+
+  def 'processEvent() saves the most recent eventConsumerOffset' {
+    when:
+    subject.processEvent(eventConsumer, SomethingHappenedEvent)
+
+    then:
+    1 * subject.eventStreamOffsetRepository.save(_) >> { eventConsumerOffset ->
+      assert eventConsumerOffset.getLastEventOffset() == eventOffset
+    }  
+  }
+~~~
 
 __Tests should have clear names__
 *Test names should follow the syntax, spelling and grammar rules of your team’s primary language. Teams should norm on how a test name is constructed, but we recommend stating what happens when the method under test is called*
