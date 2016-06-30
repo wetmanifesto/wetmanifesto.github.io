@@ -38,6 +38,12 @@ layout: default
 __Readability over duplication__
 *Instead of using private methods in your test to avoid code duplication, each unit test should take care of its own explicit setup, method calls and assertions. Unit tests should be isolated from each other so they can be understood without reading the entire test suite*
 
+"DAMP and DRY are not contradictory, rather they balance two different aspects of a code's maintainability. Maintainable code (code that is easy to change) is the ultimate goal here...Tests often contain inherent duplication because they are testing the same thing over and over again, only with slightly different input values or setup code. However, unlike production code, this duplication is usually isolated only to the scenarios within a single test fixture/file. Because of this, the duplication is minimal and obvious, which means it poses less risk to the project than other types of duplication.
+
+Furthermore, removing this kind of duplication reduces the readability of the tests. The details that were previously duplicated in each test are now hidden away in some new method or class. To get the full picture of the test, you now have to mentally put all these pieces back together.
+
+Therefore, since test code duplication often carries less risk, and promotes readability, its easy to see how it is considered acceptable." - Chris Edwards (https://stackoverflow.com/questions/6453235/what-does-damp-not-dry-mean-when-talking-about-unit-tests)
+
 
 __Single purpose for each test__
 *Unit tests should fail for exactly one reason. The developer should be able to quickly read the test and know the single, exact defect in the production code that needs to be fixed. Strive for single assertions in your unit tests as this will emphasize the single functionality that you are testing*
@@ -48,7 +54,9 @@ __Tests should be well-organized__
 
 __Tests should have clear names__
 *Test names should follow the syntax, spelling and grammar rules of your team’s primary language. Teams should norm on how a test name is constructed, but we recommend stating what happens when the method under test is called*
+
 *For unit tests, the names should describe the method under test, the parameters passed in, and the assumption being made*
+
 *For integration tests, the names should describe behavior instead of the specific parts of the production code that are being tested*
 
 ~~~java
